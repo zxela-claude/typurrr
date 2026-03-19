@@ -1,0 +1,12 @@
+{
+  "name": "typurrr",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0"
+  }
+}
