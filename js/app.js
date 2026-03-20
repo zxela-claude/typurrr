@@ -48,6 +48,10 @@ document.getElementById('btn-play-solo').addEventListener('click', async () => {
 document.getElementById('btn-create-race').addEventListener('click', async () => { if (!getUser()) { openAuthModal(); return; } const { createRace } = await import('./race.js'); createRace(); });
 document.getElementById('btn-join-race').addEventListener('click', () => { if (!getUser()) { openAuthModal(); return; } document.getElementById('join-modal').classList.remove('hidden'); document.getElementById('join-code').value=''; document.getElementById('join-code').focus(); });
 document.getElementById('btn-leaderboard').addEventListener('click', async () => { const { openLeaderboard } = await import('./leaderboard.js'); openLeaderboard(); });
+document.getElementById('btn-my-stats').addEventListener('click', async () => {
+  const { openStats } = await import('./stats.js');
+  openStats();
+});
 document.getElementById('join-submit').addEventListener('click', async () => { const code=document.getElementById('join-code').value.trim().toUpperCase(); if(!code) return; document.getElementById('join-modal').classList.add('hidden'); const { joinRace } = await import('./race.js'); joinRace(code); });
 document.getElementById('join-close').addEventListener('click', () => document.getElementById('join-modal').classList.add('hidden'));
 document.getElementById('join-modal').addEventListener('click', e => { if(e.target===e.currentTarget) document.getElementById('join-modal').classList.add('hidden'); });
