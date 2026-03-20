@@ -3,6 +3,7 @@ import { createEngine } from './engine.js';
 import { CatSprite } from './sprites.js';
 import { getRandomPrompt, saveScore, createRaceInDb, saveGhost } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
+import { playClick, playError, playFinish } from './audio.js';
 
 let _engine, _cat, _raf, _lastT, _prompt, _timerInterval, _startedAt;
 let _keystrokes, _prevKeystrokeTime;
@@ -44,6 +45,10 @@ function onKey(e) {
   _keystrokes.push({ char, t_ms: now - (_prevKeystrokeTime ?? now) });
   _prevKeystrokeTime = now;
   _engine.type(char); renderPrompt();
+  if (char !== 'Backspace') {
+    if (_engine.hasError) playError();
+    else playClick();
+  }
   document.getElementById('solo-wpm-display').textContent = `${_engine.wpm} WPM`;
   if (_engine.isComplete) finish();
 }
@@ -90,6 +95,23 @@ async function finish() {
   document.getElementById('result-accuracy').textContent = _engine.accuracy;
   document.getElementById('result-raw-wpm').textContent  = _engine.rawWpm;
   document.getElementById('solo-results').classList.remove('hidden');
+  playFinish();
+  // Build per-key latency map
+  const keyLatency = {};
+  for (const { char, t_ms } of _keystrokes) {
+    if (char === 'Backspace' || t_ms === 0) continue;
+    if (!keyLatency[char]) keyLatency[char] = { total: 0, count: 0 };
+    keyLatency[char].total += t_ms;
+    keyLatency[char].count++;
+  }
+  // Save to localStorage (merge with existing data)
+  const existing = JSON.parse(localStorage.getItem('typurrr-heatmap') || '{}');
+  for (const [char, { total, count }] of Object.entries(keyLatency)) {
+    if (!existing[char]) existing[char] = { total: 0, count: 0 };
+    existing[char].total += total;
+    existing[char].count += count;
+  }
+  localStorage.setItem('typurrr-heatmap', JSON.stringify(existing));
   const user = getUser();
   if (user && _prompt.id) {
     saveScore({ userId: user.id, wpm: _engine.wpm, accuracy: _engine.accuracy, rawWpm: _engine.rawWpm, promptId: _prompt.id, mode: 'solo' }).catch(console.warn);

@@ -3,6 +3,7 @@ import { createEngine } from './engine.js';
 import { CatSprite } from './sprites.js';
 import { supabase, getRandomPrompt, createRaceInDb, getRaceByCode, joinRaceInDb, setPlayerReady, setRaceStatus, recordFinish, saveScore, saveGhost, getRaceResults } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
+import { playClick, playError, playFinish } from './audio.js';
 
 let _race, _engine, _myCat, _others, _channel, _lobbySub, _raf, _lastT;
 let _keystrokes, _lastKsT, _finishPos, _timerInt, _startedAt;
@@ -105,6 +106,10 @@ function _onKey(e) {
   }
   const now = Date.now(); _keystrokes.push({ char, t_ms: now - _lastKsT }); _lastKsT = now;
   _engine.type(char); renderRacePrompt();
+  if (char !== 'Backspace') {
+    if (_engine.hasError) playError();
+    else playClick();
+  }
   document.getElementById('race-wpm-display').textContent = `${_engine.wpm} WPM`;
   const user = getUser(); const profile = getUserProfile();
   _channel.send({ type:'broadcast', event:'progress', payload: { userId: user.id, username: profile?.username, variant: profile?.avatar_cat||'orange', pct: _engine.cursor/_engine.prompt.length } });
@@ -149,6 +154,7 @@ async function _finishRace() {
     await saveGhost(_race.id, user.id, _keystrokes, _engine.wpm).catch(()=>{});
   } catch(e) { console.warn(e); }
   _channel.send({ type:'broadcast', event:'finish', payload:{ userId:user.id, wpm:_engine.wpm } });
+  playFinish();
   setTimeout(_showResults, 2500);
 }
 
