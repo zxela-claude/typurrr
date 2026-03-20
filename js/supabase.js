@@ -28,6 +28,11 @@ export async function getRandomPrompt() {
   return data[Math.floor(Math.random() * data.length)];
 }
 
+export async function submitPrompt(text) {
+  const { data, error } = await supabase.from('prompts').insert({ text }).select().single();
+  if (error) throw error; return data;
+}
+
 export async function saveScore({ userId, wpm, accuracy, rawWpm, promptId, mode, raceId = null }) {
   const { data, error } = await supabase.from('scores').insert({
     user_id: userId, wpm, accuracy, raw_wpm: rawWpm, prompt_id: promptId, mode, race_id: raceId,
