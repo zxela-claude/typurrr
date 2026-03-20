@@ -1,10 +1,11 @@
 import { showScreen } from './screens.js';
 import { createEngine } from './engine.js';
 import { CatSprite } from './sprites.js';
-import { getRandomPrompt, saveScore } from './supabase.js';
+import { getRandomPrompt, saveScore, createRaceInDb, saveGhost } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
 
 let _engine, _cat, _raf, _lastT, _prompt, _timerInterval, _startedAt;
+let _keystrokes, _prevKeystrokeTime;
 
 const FALLBACK = 'the quick brown cat leaps over the lazy sleeping dog on a warm sunny afternoon type fast paws on keys meow louder than the clicking';
 
@@ -14,8 +15,11 @@ export async function startSolo() {
   _engine = createEngine(_prompt.text);
   _cat    = new CatSprite(getUserProfile()?.avatar_cat || 'orange');
   _startedAt = null;
+  _keystrokes = [];
+  _prevKeystrokeTime = null;
 
   document.getElementById('solo-results').classList.add('hidden');
+  document.getElementById('btn-race-ghost').classList.add('hidden');
   document.getElementById('solo-wpm-display').textContent = '0 WPM';
   document.getElementById('solo-timer').textContent = '0:00';
   renderPrompt();
@@ -35,7 +39,10 @@ function onKey(e) {
   if (_engine.isComplete) return;
   const char = e.key === 'Backspace' ? 'Backspace' : (e.key.length === 1 ? e.key : null);
   if (!char) return; e.preventDefault();
-  if (!_startedAt) { _startedAt = Date.now(); startTimer(); }
+  const now = Date.now();
+  if (!_startedAt) { _startedAt = now; startTimer(); }
+  _keystrokes.push({ char, t_ms: now - (_prevKeystrokeTime ?? now) });
+  _prevKeystrokeTime = now;
   _engine.type(char); renderPrompt();
   document.getElementById('solo-wpm-display').textContent = `${_engine.wpm} WPM`;
   if (_engine.isComplete) finish();
@@ -84,7 +91,16 @@ async function finish() {
   document.getElementById('result-raw-wpm').textContent  = _engine.rawWpm;
   document.getElementById('solo-results').classList.remove('hidden');
   const user = getUser();
-  if (user && _prompt.id) saveScore({ userId: user.id, wpm: _engine.wpm, accuracy: _engine.accuracy, rawWpm: _engine.rawWpm, promptId: _prompt.id, mode: 'solo' }).catch(console.warn);
+  if (user && _prompt.id) {
+    saveScore({ userId: user.id, wpm: _engine.wpm, accuracy: _engine.accuracy, rawWpm: _engine.rawWpm, promptId: _prompt.id, mode: 'solo' }).catch(console.warn);
+    try {
+      const race = await createRaceInDb(user.id, _prompt.id);
+      await saveGhost(race.id, user.id, _keystrokes, _engine.wpm);
+      const ghostBtn = document.getElementById('btn-race-ghost');
+      ghostBtn.classList.remove('hidden');
+      ghostBtn.onclick = async () => { const { startChallenge } = await import('./ghost.js'); startChallenge(race.id); };
+    } catch (e) { console.warn('Ghost save failed', e); }
+  }
 }
 
 document.getElementById('btn-retry').addEventListener('click', startSolo);

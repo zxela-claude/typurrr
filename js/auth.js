@@ -3,6 +3,7 @@ import { supabase, signIn, signUp, signOut, fetchProfile } from './supabase.js';
 let _user = null, _profile = null, _onChange = null;
 export const getUser = () => _user;
 export const getUserProfile = () => _profile;
+export function setUserProfile(profile) { _profile = profile; }
 
 export async function initAuth(onChange) {
   _onChange = onChange;

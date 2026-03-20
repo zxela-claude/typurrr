@@ -2,6 +2,7 @@ import { showScreen } from './screens.js';
 import { updateProfile, getPersonalBests } from './supabase.js';
 import { CatSprite } from './sprites.js';
 import { CAT_VARIANTS } from './config.js';
+import { setUserProfile } from './auth.js';
 
 export async function openProfile(user, profile) {
   showScreen('profile');
@@ -18,6 +19,8 @@ export async function openProfile(user, profile) {
       picker.querySelectorAll('.avatar-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       await updateProfile(user.id, { avatar_cat: variant }).catch(console.warn);
+      setUserProfile({ ...profile, avatar_cat: variant });
+      profile = { ...profile, avatar_cat: variant };
     };
     picker.appendChild(btn);
   });
