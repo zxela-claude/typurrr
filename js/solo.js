@@ -20,6 +20,8 @@ export async function startSolo() {
 
   document.getElementById('solo-results').classList.add('hidden');
   document.getElementById('btn-race-ghost').classList.add('hidden');
+  document.getElementById('btn-share-ghost').classList.add('hidden');
+  document.getElementById('btn-solo-challenge').classList.add('hidden');
   document.getElementById('solo-wpm-display').textContent = '0 WPM';
   document.getElementById('solo-timer').textContent = '0:00';
   renderPrompt();
@@ -99,6 +101,29 @@ async function finish() {
       const ghostBtn = document.getElementById('btn-race-ghost');
       ghostBtn.classList.remove('hidden');
       ghostBtn.onclick = async () => { const { startChallenge } = await import('./ghost.js'); startChallenge(race.id); };
+
+      const shareBtn = document.getElementById('btn-share-ghost');
+      shareBtn.classList.remove('hidden');
+      shareBtn.onclick = () => {
+        const url = `${location.origin}?challenge=${race.id}`;
+        navigator.clipboard.writeText(url).then(() => {
+          shareBtn.textContent = '✓ LINK COPIED';
+          setTimeout(() => { shareBtn.textContent = '🔗 SHARE GHOST'; }, 2000);
+        }).catch(() => {
+          // Fallback: show the URL
+          prompt('Copy this link:', url);
+        });
+      };
+
+      const challengeBtn = document.getElementById('btn-solo-challenge');
+      challengeBtn.classList.remove('hidden');
+      challengeBtn.onclick = () => {
+        const url = `${location.origin}?challenge=${race.id}`;
+        navigator.clipboard.writeText(url).then(() => {
+          challengeBtn.textContent = '✓ CHALLENGE LINK COPIED';
+          setTimeout(() => { challengeBtn.textContent = '⚡ CHALLENGE FRIENDS'; }, 2000);
+        });
+      };
     } catch (e) { console.warn('Ghost save failed', e); }
   }
 }

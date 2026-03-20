@@ -46,10 +46,67 @@ document.getElementById('join-close').addEventListener('click', () => document.g
 document.getElementById('join-modal').addEventListener('click', e => { if(e.target===e.currentTarget) document.getElementById('join-modal').classList.add('hidden'); });
 document.getElementById('join-code').addEventListener('keydown', async e => { if(e.key!=='Enter') return; const code=e.target.value.trim().toUpperCase(); if(!code) return; document.getElementById('join-modal').classList.add('hidden'); const { joinRace } = await import('./race.js'); joinRace(code); });
 
+// Prompt submission modal
+document.getElementById('btn-submit-prompt').addEventListener('click', () => {
+  if (!getUser()) { openAuthModal(); return; }
+  document.getElementById('prompt-modal').classList.remove('hidden');
+  document.getElementById('prompt-text').value = '';
+  document.getElementById('prompt-char-count').textContent = '0/200';
+  document.getElementById('prompt-error').classList.add('hidden');
+  document.getElementById('prompt-text').focus();
+});
+
+document.getElementById('prompt-close').addEventListener('click', () => {
+  document.getElementById('prompt-modal').classList.add('hidden');
+});
+
+document.getElementById('prompt-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) document.getElementById('prompt-modal').classList.add('hidden');
+});
+
+document.getElementById('prompt-text').addEventListener('input', () => {
+  const len = document.getElementById('prompt-text').value.length;
+  document.getElementById('prompt-char-count').textContent = `${len}/200`;
+});
+
+document.getElementById('prompt-submit').addEventListener('click', async () => {
+  const text = document.getElementById('prompt-text').value.trim();
+  const errorEl = document.getElementById('prompt-error');
+  errorEl.classList.add('hidden');
+
+  if (text.length < 50) {
+    errorEl.textContent = 'Prompt must be at least 50 characters';
+    errorEl.classList.remove('hidden'); return;
+  }
+  if (text.length > 200) {
+    errorEl.textContent = 'Prompt must be 200 characters or less';
+    errorEl.classList.remove('hidden'); return;
+  }
+
+  document.getElementById('prompt-submit').textContent = '...';
+  try {
+    const { submitPrompt } = await import('./supabase.js');
+    await submitPrompt(text);
+    document.getElementById('prompt-modal').classList.add('hidden');
+    // Show success toast (inline for now)
+    const toast = document.createElement('div');
+    toast.textContent = '✓ Prompt submitted!';
+    toast.style.cssText = 'position:fixed;top:16px;right:16px;background:var(--border);color:var(--primary);padding:8px 12px;font-size:9px;z-index:9999;border:1px solid var(--primary)';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  } catch(e) {
+    errorEl.textContent = e.message || 'Failed to submit prompt';
+    errorEl.classList.remove('hidden');
+  } finally {
+    document.getElementById('prompt-submit').textContent = '✓ SUBMIT';
+  }
+});
+
 // URL routing
 const params = new URLSearchParams(location.search);
-if (params.get('challenge')) {
-  const { startChallenge } = await import('./ghost.js'); startChallenge(params.get('challenge'));
+if (params.get('challenge') || params.get('replay')) {
+  const id = params.get('challenge') || params.get('replay');
+  const { startChallenge } = await import('./ghost.js'); startChallenge(id);
 } else if (params.get('join')) {
   if (getUser()) { const { joinRace } = await import('./race.js'); joinRace(params.get('join')); }
   else { openAuthModal(); }

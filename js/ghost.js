@@ -18,6 +18,8 @@ export async function startChallenge(raceId) {
   document.getElementById('solo-results').classList.add('hidden');
   document.getElementById('solo-wpm-display').textContent = '0 WPM';
   renderPrompt(engine);
+  const ghostName = ghost?.profiles?.username || 'GHOST';
+  document.getElementById('typing-input').placeholder = `racing ${ghostName} — start typing...`;
 
   // Precompute ghost timeline
   const timeline = [];
@@ -66,7 +68,7 @@ export async function startChallenge(raceId) {
   input.value=''; input.disabled=false;
   input.replaceWith(input.cloneNode(true));
   const fresh = document.getElementById('typing-input');
-  fresh.placeholder = 'start typing to race the ghost...'; fresh.focus();
+  fresh.placeholder = `racing ${ghostName} — start typing...`; fresh.focus();
 
   fresh.addEventListener('keydown', e => {
     if (engine.isComplete) return;
