@@ -36,7 +36,20 @@ export function bindAuthModal() {
   submitEl.addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const pw    = document.getElementById('auth-password').value;
-    errorEl.classList.add('hidden'); submitEl.textContent = '...';
+    errorEl.classList.add('hidden');
+
+    if (!email.includes('@') || !email.includes('.')) {
+      errorEl.textContent = 'Please enter a valid email address';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    if (pw.length < 6) {
+      errorEl.textContent = 'Password must be at least 6 characters';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    submitEl.textContent = '...';
     try {
       if (mode === 'signin') await signIn(email, pw); else await signUp(email, pw);
       closeAuthModal();

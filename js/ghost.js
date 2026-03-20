@@ -3,16 +3,37 @@ import { createEngine } from './engine.js';
 import { CatSprite } from './sprites.js';
 import { getGhost, getRacePrompt, saveScore } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
+import { showToast } from './toast.js';
 
 export async function startChallenge(raceId) {
   let race, ghost;
-  try { [race, ghost] = await Promise.all([getRacePrompt(raceId), getGhost(raceId)]); }
-  catch { alert('Challenge not found'); showScreen('landing'); return; }
+  try {
+    race = await getRacePrompt(raceId);
+  } catch {
+    showToast('Challenge not found');
+    showScreen('landing');
+    return;
+  }
+  try {
+    ghost = await getGhost(raceId);
+  } catch {
+    ghost = null; // no ghost yet, race anyway
+  }
+
+  if (!ghost) {
+    console.log('[ghost] No ghost data for race', raceId, '— racing without ghost');
+    showToast('No ghost data found — race anyway!', 'info');
+  }
 
   const promptText = race.prompts?.text || '';
   const engine = createEngine(promptText);
   const myCat = new CatSprite(getUserProfile()?.avatar_cat || 'orange');
   const ghostCat = new CatSprite('grey');
+
+  // Cache CSS vars once per screen open (re-read on palette change is acceptable here)
+  const css = getComputedStyle(document.documentElement);
+  const borderColor = css.getPropertyValue('--border').trim() || '#2a5e2a';
+  const dimColor    = css.getPropertyValue('--dim').trim()    || '#1e6e1e';
 
   showScreen('solo');
   document.getElementById('solo-results').classList.add('hidden');
@@ -48,12 +69,9 @@ export async function startChallenge(raceId) {
     const dt = t - lastT; lastT = t;
     const ctx = canvas.getContext('2d'); const W=canvas.width, H=canvas.height;
     ctx.clearRect(0,0,W,H);
-    const css = getComputedStyle(document.documentElement);
-    const bc = css.getPropertyValue('--border').trim()||'#2a5e2a';
-    const dc = css.getPropertyValue('--dim').trim()||'#1e6e1e';
-    ctx.strokeStyle=bc; ctx.lineWidth=1;
+    ctx.strokeStyle=borderColor; ctx.lineWidth=1;
     [H/2-4,H-8].forEach(y=>{ctx.beginPath();ctx.moveTo(20,y);ctx.lineTo(W-20,y);ctx.stroke();});
-    ctx.fillStyle=dc; ctx.font='8px monospace';
+    ctx.fillStyle=dimColor; ctx.font='8px monospace';
     ctx.fillText('YOU',6,H/2-20); ctx.fillText(ghost?.profiles?.username||'GHOST',6,H-24);
     const myPct = engine.cursor/promptText.length;
     myCat.update(raceStart?dt:0); myCat.draw(ctx, 20+myPct*(W-80), H/2-60, 3);

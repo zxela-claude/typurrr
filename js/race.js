@@ -3,9 +3,11 @@ import { createEngine } from './engine.js';
 import { CatSprite } from './sprites.js';
 import { supabase, getRandomPrompt, createRaceInDb, getRaceByCode, joinRaceInDb, setPlayerReady, setRaceStatus, recordFinish, saveScore, saveGhost, getRaceResults } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
+import { showToast } from './toast.js';
 
 let _race, _engine, _myCat, _others, _channel, _lobbySub, _raf, _lastT;
 let _keystrokes, _lastKsT, _finishPos, _timerInt, _startedAt;
+let _borderColor, _dimColor;
 
 export async function createRace() {
   const user = getUser(); const prompt = await getRandomPrompt();
@@ -18,10 +20,10 @@ export async function joinRace(code) {
   const user = getUser();
   try {
     const race = await getRaceByCode(code);
-    if (race.status !== 'lobby') { alert('Race already started'); return; }
+    if (race.status !== 'lobby') { showToast('Race already started'); return; }
     await joinRaceInDb(race.id, user.id);
     _race = race; _openLobby();
-  } catch { alert('Race not found — check the code'); }
+  } catch { showToast('Race not found — check the code'); }
 }
 
 function _openLobby() {
@@ -74,6 +76,11 @@ async function _startRace() {
   const promptText = _race.prompt?.text || _race.prompts?.text || '';
   _engine = createEngine(promptText); _myCat = new CatSprite(profile?.avatar_cat||'orange');
   _others = {}; _finishPos = 0; _keystrokes = []; _lastKsT = Date.now(); _startedAt = null;
+
+  // Cache CSS vars once per race start — avoids getComputedStyle every animation frame
+  const css = getComputedStyle(document.documentElement);
+  _borderColor = css.getPropertyValue('--border').trim() || '#2a5e2a';
+  _dimColor    = css.getPropertyValue('--dim').trim()    || '#1e6e1e';
   renderRacePrompt();
   document.getElementById('race-wpm-display').textContent = '0 WPM';
   document.getElementById('race-timer').textContent = '0:00';
@@ -117,15 +124,12 @@ function _drawTrack(dt) {
   const canvas = document.getElementById('race-track-multi');
   const ctx = canvas.getContext('2d'); const W=canvas.width, H=canvas.height;
   ctx.clearRect(0,0,W,H);
-  const css = getComputedStyle(document.documentElement);
-  const bc = css.getPropertyValue('--border').trim()||'#2a5e2a';
-  const dc = css.getPropertyValue('--dim').trim()||'#1e6e1e';
   const all = [{ cat:_myCat, pct:_engine.cursor/_engine.prompt.length, label:'YOU' }, ...Object.values(_others).map(o=>({cat:o.cat,pct:o.pct,label:o.username}))];
   const rH = Math.floor(H/Math.max(all.length,1));
   all.forEach((p,i) => {
     const y = i*rH;
-    ctx.strokeStyle=bc; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(20,y+rH-6); ctx.lineTo(W-20,y+rH-6); ctx.stroke();
-    ctx.fillStyle=dc; ctx.font='8px monospace'; ctx.fillText(p.label,6,y+rH-22);
+    ctx.strokeStyle=_borderColor; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(20,y+rH-6); ctx.lineTo(W-20,y+rH-6); ctx.stroke();
+    ctx.fillStyle=_dimColor; ctx.font='8px monospace'; ctx.fillText(p.label,6,y+rH-22);
     p.cat.update(_startedAt?dt:0); p.cat.draw(ctx, 20+p.pct*(W-80), y+rH-70, 3);
   });
 }

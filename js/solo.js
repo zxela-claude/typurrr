@@ -6,6 +6,7 @@ import { getUser, getUserProfile } from './auth.js';
 
 let _engine, _cat, _raf, _lastT, _prompt, _timerInterval, _startedAt;
 let _keystrokes, _prevKeystrokeTime;
+let _borderColor, _primaryColor;
 
 const FALLBACK = 'the quick brown cat leaps over the lazy sleeping dog on a warm sunny afternoon type fast paws on keys meow louder than the clicking';
 
@@ -17,6 +18,11 @@ export async function startSolo() {
   _startedAt = null;
   _keystrokes = [];
   _prevKeystrokeTime = null;
+
+  // Cache CSS vars once per solo start — avoids getComputedStyle every animation frame
+  const css = getComputedStyle(document.documentElement);
+  _borderColor  = css.getPropertyValue('--border').trim()  || '#2a5e2a';
+  _primaryColor = css.getPropertyValue('--primary').trim() || '#39ff14';
 
   document.getElementById('solo-results').classList.add('hidden');
   document.getElementById('btn-race-ghost').classList.add('hidden');
@@ -64,11 +70,10 @@ function drawTrack(dt) {
   const canvas = document.getElementById('race-track');
   const ctx = canvas.getContext('2d'); const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
-  const css = getComputedStyle(document.documentElement);
-  ctx.strokeStyle = css.getPropertyValue('--border').trim() || '#2a5e2a';
+  ctx.strokeStyle = _borderColor;
   ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(20, H - 16); ctx.lineTo(W - 20, H - 16); ctx.stroke();
   const pct = _engine.cursor / _engine.prompt.length;
-  ctx.fillStyle = css.getPropertyValue('--primary').trim() || '#39ff14';
+  ctx.fillStyle = _primaryColor;
   ctx.fillRect(20, H - 8, (W - 40) * pct, 4);
   _cat.update(_startedAt ? dt : 0);
   _cat.draw(ctx, 20 + pct * (W - 80), H - 68, 3);
