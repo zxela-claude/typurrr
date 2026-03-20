@@ -40,9 +40,9 @@ export async function getLeaderboard(filter = 'alltime') {
   if (filter === 'week') q = q.gte('created_at', new Date(Date.now() - 7*86400000).toISOString());
   const { data, error } = await q; if (error) throw error; return data;
 }
-export async function getPersonalBests(userId) {
+export async function getPersonalBests(userId, limit = 10) {
   const { data, error } = await supabase.from('scores').select('*')
-    .eq('user_id', userId).order('wpm', { ascending: false }).limit(10);
+    .eq('user_id', userId).order('created_at', { ascending: false }).limit(limit);
   if (error) throw error; return data;
 }
 

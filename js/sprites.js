@@ -1,8 +1,10 @@
 const VARIANTS = {
-  orange:  ['#e06b00', '#b85000', '#39ff14', '#ff6699'],
-  grey:    ['#8a8a8a', '#555555', '#00cfff', '#ff6699'],
-  tuxedo:  ['#1a1a1a', '#f0f0f0', '#ff2244', '#ff9999'],
-  calico:  ['#d4a843', '#c0532a', '#9b59b6', '#ff6699'],
+  orange:    ['#e06b00', '#b85000', '#39ff14', '#ff6699'],
+  grey:      ['#8a8a8a', '#555555', '#00cfff', '#ff6699'],
+  tuxedo:    ['#1a1a1a', '#f0f0f0', '#ff2244', '#ff9999'],
+  calico:    ['#d4a843', '#c0532a', '#9b59b6', '#ff6699'],
+  ghost_cat: ['#c8d8e8', '#a0b8c8', '#ff88aa', '#ffffff'],  // pale blue-white ghost cat
+  neon_cat:  ['#ff00ff', '#aa00ff', '#00ffff', '#ffff00'],  // neon magenta/purple
 };
 
 const CAT_BODY = [

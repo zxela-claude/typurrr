@@ -2,5 +2,5 @@
 export const SUPABASE_URL = window.__TYPURRR_SUPABASE_URL__ || 'https://REPLACE_ME.supabase.co';
 export const SUPABASE_ANON_KEY = window.__TYPURRR_SUPABASE_ANON_KEY__ || 'REPLACE_ME';
 
-export const CAT_VARIANTS = ['orange', 'grey', 'tuxedo', 'calico'];
+export const CAT_VARIANTS = ['orange', 'grey', 'tuxedo', 'calico', 'ghost_cat', 'neon_cat'];
 export const PALETTES = ['phosphor', 'amber', 'gameboy'];
