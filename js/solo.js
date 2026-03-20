@@ -4,6 +4,7 @@ import { CatSprite } from './sprites.js';
 import { getRandomPrompt, saveScore, createRaceInDb, saveGhost } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
 import { playClick, playError, playFinish } from './audio.js';
+import { renderPrompt as renderPromptFn } from './render.js';
 
 let _engine, _cat, _raf, _lastT, _prompt, _timerInterval, _startedAt;
 let _keystrokes, _prevKeystrokeTime;
@@ -31,7 +32,7 @@ export async function startSolo() {
   document.getElementById('btn-solo-challenge').classList.add('hidden');
   document.getElementById('solo-wpm-display').textContent = '0 WPM';
   document.getElementById('solo-timer').textContent = '0:00';
-  renderPrompt();
+  renderPromptFn(_engine);
 
   clearInterval(_timerInterval); cancelAnimationFrame(_raf);
   const input = document.getElementById('typing-input');
@@ -52,7 +53,7 @@ function onKey(e) {
   if (!_startedAt) { _startedAt = now; startTimer(); }
   _keystrokes.push({ char, t_ms: now - (_prevKeystrokeTime ?? now) });
   _prevKeystrokeTime = now;
-  _engine.type(char); renderPrompt();
+  _engine.type(char); renderPromptFn(_engine);
   if (char !== 'Backspace') {
     if (_engine.hasError) playError();
     else playClick();
@@ -86,14 +87,6 @@ function drawTrack(dt) {
   _cat.draw(ctx, 20 + pct * (W - 80), H - 68, 3);
 }
 
-function renderPrompt() {
-  document.getElementById('prompt-display').innerHTML = [..._engine.prompt].map((ch, i) => {
-    const s = ch === ' ' ? '&nbsp;' : ch.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    if (i < _engine.cursor) return `<span class="char-correct">${s}</span>`;
-    if (i === _engine.cursor) return `<span class="${_engine.hasError ? 'char-error' : 'char-cursor'}">${s}</span>`;
-    return `<span class="char-pending">${s}</span>`;
-  }).join('');
-}
 
 async function finish() {
   clearInterval(_timerInterval); cancelAnimationFrame(_raf);

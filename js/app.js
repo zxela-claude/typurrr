@@ -2,6 +2,7 @@ import { showScreen } from './screens.js';
 import { initAuth, openAuthModal, bindAuthModal, getUser, getUserProfile } from './auth.js';
 import { getLeaderboard } from './supabase.js';
 import { toggleMute, isMuted } from './audio.js';
+import { showToast } from './toast.js';
 
 // Palette
 const saved = localStorage.getItem('typurrr-palette') || 'phosphor';
@@ -99,12 +100,7 @@ document.getElementById('prompt-submit').addEventListener('click', async () => {
     const { submitPrompt } = await import('./supabase.js');
     await submitPrompt(text);
     document.getElementById('prompt-modal').classList.add('hidden');
-    // Show success toast (inline for now)
-    const toast = document.createElement('div');
-    toast.textContent = '✓ Prompt submitted!';
-    toast.style.cssText = 'position:fixed;top:16px;right:16px;background:var(--border);color:var(--primary);padding:8px 12px;font-size:9px;z-index:9999;border:1px solid var(--primary)';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    showToast('✓ Prompt submitted!', 'info');
   } catch(e) {
     errorEl.textContent = e.message || 'Failed to submit prompt';
     errorEl.classList.remove('hidden');

@@ -4,6 +4,7 @@ import { CatSprite } from './sprites.js';
 import { getGhost, getRacePrompt, saveScore } from './supabase.js';
 import { getUser, getUserProfile } from './auth.js';
 import { showToast } from './toast.js';
+import { renderPrompt } from './render.js';
 
 export async function startChallenge(raceId) {
   let race, ghost;
@@ -108,11 +109,3 @@ export async function startChallenge(raceId) {
   });
 }
 
-function renderPrompt(engine) {
-  document.getElementById('prompt-display').innerHTML = [...engine.prompt].map((ch,i)=>{
-    const s=ch===' '?'&nbsp;':ch.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    if(i<engine.cursor) return `<span class="char-correct">${s}</span>`;
-    if(i===engine.cursor) return `<span class="${engine.hasError?'char-error':'char-cursor'}">${s}</span>`;
-    return `<span class="char-pending">${s}</span>`;
-  }).join('');
-}

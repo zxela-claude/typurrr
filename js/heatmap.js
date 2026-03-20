@@ -23,9 +23,6 @@ export function drawHeatmap(canvas) {
     }
   }
 
-  const css = getComputedStyle(document.documentElement);
-  const primary = css.getPropertyValue('--primary').trim() || '#39ff14';
-
   const keyW = Math.floor((W - 20) / 14);
   const keyH = Math.floor((H - 10) / 5);
 

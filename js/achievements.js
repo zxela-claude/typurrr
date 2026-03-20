@@ -13,35 +13,35 @@ const ACHIEVEMENTS = [
 
 // Cat unlocks tied to achievements
 export const CAT_UNLOCKS = {
-  tuxedo:    'wpm_50',     // already in sprites but locked until 50wpm
-  calico:    'accuracy_99', // unlock with 99% accuracy
-  // These need new sprite variants to be added to sprites.js:
-  ghost_cat: 'wpm_100',   // translucent white cat for 100wpm
-  neon_cat:  'races_50',  // neon-colored cat for 50 races
+  tuxedo:    'wpm_50',
+  calico:    'accuracy_99',
+  ghost_cat: 'wpm_100',
+  neon_cat:  'races_50',
 };
 
+// O(n) single-pass streak check
 function checkImprovementStreak(scores, n) {
   if (scores.length < n) return false;
   const sorted = [...scores].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-  for (let i = sorted.length - 1; i >= n - 1; i--) {
-    let streak = true;
-    for (let j = 1; j < n; j++) {
-      if (sorted[i - j + 1].wpm <= sorted[i - j].wpm) { streak = false; break; }
+  let streak = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i].wpm > sorted[i - 1].wpm) {
+      if (++streak >= n) return true;
+    } else {
+      streak = 1;
     }
-    if (streak) return true;
   }
   return false;
 }
 
+// Compute achievements once — reads/writes localStorage once per call
 export function getAchievements(scores) {
   const unlocked = new Set(JSON.parse(localStorage.getItem('typurrr-achievements') || '[]'));
   const results = ACHIEVEMENTS.map(a => ({
     ...a,
     earned: unlocked.has(a.id) || a.check(scores),
   }));
-  // Persist newly earned
-  const newlyEarned = results.filter(a => a.earned).map(a => a.id);
-  localStorage.setItem('typurrr-achievements', JSON.stringify(newlyEarned));
+  localStorage.setItem('typurrr-achievements', JSON.stringify(results.filter(a => a.earned).map(a => a.id)));
   return results;
 }
 
@@ -49,8 +49,8 @@ export function checkAchievements(scores) {
   return getAchievements(scores).filter(a => a.earned);
 }
 
-export function renderAchievements(container, scores) {
-  const all = getAchievements(scores);
+// Accepts pre-computed results to avoid a redundant getAchievements call
+export function renderAchievements(container, all) {
   container.innerHTML = `
     <p style="color:var(--dim);font-size:8px;margin-bottom:8px">🏅 ACHIEVEMENTS (${all.filter(a=>a.earned).length}/${all.length})</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px">

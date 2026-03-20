@@ -11,7 +11,7 @@ export async function openProfile(user, profile) {
   const picker = document.getElementById('avatar-picker');
   picker.innerHTML = '';
 
-  const scores = await getPersonalBests(user.id, 1000).catch(() => []);
+  const scores = await getPersonalBests(user.id, 100).catch(() => []);
   const earned = checkAchievements(scores).map(a => a.id);
 
   // Filter variants: always show orange + grey, others need achievement
