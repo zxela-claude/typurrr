@@ -5,6 +5,7 @@ import { CAT_VARIANTS } from './config.js';
 import { setUserProfile } from './auth.js';
 import { drawHeatmap } from './heatmap.js';
 import { checkAchievements, CAT_UNLOCKS } from './achievements.js';
+import { esc } from './escape.js';
 
 export async function openProfile(user, profile) {
   showScreen('profile');
@@ -75,7 +76,7 @@ export async function openProfile(user, profile) {
     });
   }
 
-  document.getElementById('profile-info').innerHTML = `<p>Username: ${profile?.username??'unknown'}</p><p>Member since: ${new Date(profile?.created_at??Date.now()).getFullYear()}</p>`;
+  document.getElementById('profile-info').innerHTML = `<p>Username: ${esc(profile?.username??'unknown')}</p><p>Member since: ${new Date(profile?.created_at??Date.now()).getFullYear()}</p>`;
 
   document.getElementById('profile-history').innerHTML = scores.length===0
     ? '<p style="color:var(--dim);font-size:9px">No races yet — go type!</p>'

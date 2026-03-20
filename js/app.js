@@ -2,6 +2,7 @@ import { showScreen } from './screens.js';
 import { initAuth, openAuthModal, bindAuthModal, getUser, getUserProfile } from './auth.js';
 import { getLeaderboard } from './supabase.js';
 import { toggleMute, isMuted } from './audio.js';
+import { esc } from './escape.js';
 import { showToast } from './toast.js';
 
 // Palette
@@ -35,7 +36,7 @@ getLeaderboard('alltime').then(rows => {
   const el = document.getElementById('landing-lb-preview');
   if (!rows?.length) { el.style.display='none'; return; }
   el.innerHTML = `<p style="font-size:8px;color:var(--dim);margin-bottom:10px">🏆 TOP SCORES</p>` +
-    rows.slice(0,5).map((r,i)=>`<div class="lb-row"><span class="lb-rank">#${i+1}</span><span class="lb-name">${r.profiles?.username??'???'}</span><span class="lb-wpm">${r.wpm} WPM</span></div>`).join('');
+    rows.slice(0,5).map((r,i)=>`<div class="lb-row"><span class="lb-rank">#${i+1}</span><span class="lb-name">${esc(r.profiles?.username??'???')}</span><span class="lb-wpm">${r.wpm} WPM</span></div>`).join('');
 }).catch(()=>{ document.getElementById('landing-lb-preview').style.display='none'; });
 
 // Mute toggle

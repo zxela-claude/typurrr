@@ -5,6 +5,7 @@ import { supabase, getRandomPrompt, createRaceInDb, getRaceByCode, joinRaceInDb,
 import { getUser, getUserProfile } from './auth.js';
 import { showToast } from './toast.js';
 import { playClick, playError, playFinish } from './audio.js';
+import { esc } from './escape.js';
 
 let _race, _engine, _myCat, _others, _channel, _lobbySub, _raf, _lastT;
 let _keystrokes, _lastKsT, _finishPos, _timerInt, _startedAt;
@@ -54,7 +55,7 @@ function _subscribeLobby() {
 async function _refreshPlayers() {
   const { data } = await supabase.from('race_participants').select('ready,profiles(username,avatar_cat)').eq('race_id', _race.id);
   document.getElementById('lobby-players').innerHTML = (data||[]).map(p =>
-    `<div class="lobby-player ${p.ready?'ready':''}"><span>${p.profiles?.username??'unknown'}</span><span>${p.ready?'✓ READY':'waiting...'}</span></div>`).join('');
+    `<div class="lobby-player ${p.ready?'ready':''}"><span>${esc(p.profiles?.username??'unknown')}</span><span>${p.ready?'✓ READY':'waiting...'}</span></div>`).join('');
 }
 
 function _startCountdown() {
@@ -166,7 +167,7 @@ async function _showResults() {
   if (_channel) { await _channel.unsubscribe(); _channel=null; }
   showScreen('results');
   const results = await getRaceResults(_race.id).catch(()=>[]);
-  document.getElementById('results-list').innerHTML = results.map((p,i)=>`<div class="lb-row"><span class="lb-rank">#${p.position??i+1}</span><span class="lb-name">${p.profiles?.username??'unknown'}</span><span class="lb-wpm">${p.scores?.wpm??'--'} WPM</span><span class="lb-acc">${Math.round(p.scores?.accuracy??0)}%</span></div>`).join('');
+  document.getElementById('results-list').innerHTML = results.map((p,i)=>`<div class="lb-row"><span class="lb-rank">#${p.position??i+1}</span><span class="lb-name">${esc(p.profiles?.username??'unknown')}</span><span class="lb-wpm">${p.scores?.wpm??'--'} WPM</span><span class="lb-acc">${Math.round(p.scores?.accuracy??0)}%</span></div>`).join('');
   document.getElementById('btn-challenge').onclick = async () => { await navigator.clipboard.writeText(`${location.origin}?challenge=${_race.id}`); document.getElementById('btn-challenge').textContent='✓ LINK COPIED'; };
   document.getElementById('btn-race-again').onclick = createRace;
   document.getElementById('btn-results-home').onclick = () => showScreen('landing');

@@ -1,5 +1,6 @@
 import { showScreen } from './screens.js';
 import { getLeaderboard } from './supabase.js';
+import { esc } from './escape.js';
 
 export async function openLeaderboard(filter = 'alltime') {
   showScreen('leaderboard');
@@ -10,7 +11,7 @@ export async function openLeaderboard(filter = 'alltime') {
     const rows = await getLeaderboard(filter);
     list.innerHTML = rows.length === 0
       ? '<p style="color:var(--dim);font-size:9px;padding:16px 0">No scores yet — be the first!</p>'
-      : rows.map((r, i) => `<div class="lb-row"><span class="lb-rank">#${i+1}</span><span class="lb-name">${r.profiles?.username??'???'}</span><span class="lb-wpm">${r.wpm} WPM</span><span class="lb-acc">${Math.round(r.accuracy??0)}%</span><span class="lb-date">${new Date(r.created_at).toLocaleDateString()}</span></div>`).join('');
+      : rows.map((r, i) => `<div class="lb-row"><span class="lb-rank">#${i+1}</span><span class="lb-name">${esc(r.profiles?.username??'???')}</span><span class="lb-wpm">${r.wpm} WPM</span><span class="lb-acc">${Math.round(r.accuracy??0)}%</span><span class="lb-date">${new Date(r.created_at).toLocaleDateString()}</span></div>`).join('');
   } catch (e) { list.innerHTML = '<p style="color:var(--error)">Failed to load.</p>'; console.error(e); }
 }
 

@@ -4,7 +4,7 @@
 create table if not exists public.profiles (
   id         uuid primary key references auth.users on delete cascade,
   username   text unique not null,
-  avatar_cat text not null default 'orange' check (avatar_cat in ('orange','grey','tuxedo','calico')),
+  avatar_cat text not null default 'orange' check (avatar_cat in ('orange','grey','tuxedo','calico','ghost_cat','neon_cat')),
   created_at timestamptz not null default now()
 );
 
@@ -68,6 +68,7 @@ create policy "profiles_select"     on public.profiles          for select using
 create policy "profiles_insert"     on public.profiles          for insert with check (auth.uid() = id);
 create policy "profiles_update"     on public.profiles          for update using (auth.uid() = id);
 create policy "prompts_select"      on public.prompts           for select using (true);
+create policy "prompts_insert"      on public.prompts           for insert with check (auth.uid() is not null);
 create policy "scores_select"       on public.scores            for select using (true);
 create policy "scores_insert"       on public.scores            for insert with check (auth.uid() = user_id);
 create policy "races_select"        on public.races             for select using (true);
@@ -75,7 +76,8 @@ create policy "races_insert"        on public.races             for insert  with
 create policy "races_update"        on public.races             for update  using (auth.uid() = host_id);
 create policy "participants_select" on public.race_participants for select using (true);
 create policy "participants_insert" on public.race_participants for insert with check (auth.uid() = user_id);
-create policy "participants_update" on public.race_participants for update using (auth.uid() = user_id);
+-- Only allow participants to update their own ready flag; position/score_id are set server-side via host/recordFinish
+create policy "participants_update_ready" on public.race_participants for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "ghosts_select"       on public.challenge_ghosts  for select using (true);
 create policy "ghosts_insert"       on public.challenge_ghosts  for insert with check (auth.uid() = user_id);
 
