@@ -3,6 +3,7 @@ import { updateProfile, getPersonalBests } from './supabase.js';
 import { CatSprite } from './sprites.js';
 import { CAT_VARIANTS } from './config.js';
 import { setUserProfile } from './auth.js';
+import { drawHeatmap } from './heatmap.js';
 
 export async function openProfile(user, profile) {
   showScreen('profile');
@@ -31,5 +32,19 @@ export async function openProfile(user, profile) {
   document.getElementById('profile-history').innerHTML = scores.length===0
     ? '<p style="color:var(--dim);font-size:9px">No races yet — go type!</p>'
     : scores.map(s=>`<div class="lb-row"><span class="lb-wpm">${s.wpm} WPM</span><span class="lb-acc">${Math.round(s.accuracy??0)}%</span><span class="lb-date">${new Date(s.created_at).toLocaleDateString()}</span><span style="color:var(--dim);font-size:7px">${s.mode}</span></div>`).join('');
+  // Heatmap
+  let heatmapCanvas = document.getElementById('profile-heatmap');
+  if (!heatmapCanvas) {
+    const section = document.createElement('div');
+    section.innerHTML = '<p style="color:var(--dim);font-size:8px;margin:12px 0 6px">⌨ KEY SPEED HEATMAP</p>';
+    heatmapCanvas = document.createElement('canvas');
+    heatmapCanvas.id = 'profile-heatmap';
+    heatmapCanvas.width = 600; heatmapCanvas.height = 120;
+    heatmapCanvas.style.cssText = 'display:block;max-width:100%;image-rendering:pixelated;margin:0 auto';
+    section.appendChild(heatmapCanvas);
+    document.getElementById('profile-history').after(section);
+  }
+  drawHeatmap(heatmapCanvas);
+
   document.getElementById('btn-profile-home').onclick = () => showScreen('landing');
 }

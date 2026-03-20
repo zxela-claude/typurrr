@@ -1,6 +1,7 @@
 import { showScreen } from './screens.js';
 import { initAuth, openAuthModal, bindAuthModal, getUser, getUserProfile } from './auth.js';
 import { getLeaderboard } from './supabase.js';
+import { toggleMute, isMuted } from './audio.js';
 
 // Palette
 const saved = localStorage.getItem('typurrr-palette') || 'phosphor';
@@ -35,6 +36,12 @@ getLeaderboard('alltime').then(rows => {
   el.innerHTML = `<p style="font-size:8px;color:var(--dim);margin-bottom:10px">🏆 TOP SCORES</p>` +
     rows.slice(0,5).map((r,i)=>`<div class="lb-row"><span class="lb-rank">#${i+1}</span><span class="lb-name">${r.profiles?.username??'???'}</span><span class="lb-wpm">${r.wpm} WPM</span></div>`).join('');
 }).catch(()=>{ document.getElementById('landing-lb-preview').style.display='none'; });
+
+// Mute toggle
+document.getElementById('btn-mute').addEventListener('click', () => {
+  const muted = toggleMute();
+  document.getElementById('btn-mute').textContent = muted ? '🔇' : '🔊';
+});
 
 // Nav
 document.getElementById('btn-play-solo').addEventListener('click', async () => { const { startSolo } = await import('./solo.js'); startSolo(); });
