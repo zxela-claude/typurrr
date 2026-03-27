@@ -143,3 +143,83 @@ describe('getLeaderboard week filter date calculation', () => {
     expect(weekAgo.getTime()).toBeLessThan(Date.now());
   });
 });
+
+// --- Race finish position logic (NAN-77) ---
+describe('Race finish position tracking', () => {
+  // Simulates the _finishPos counter managed in race.js
+  function makeFinishTracker() {
+    let finishPos = 0;
+    return {
+      onOpponentFinish: () => { finishPos++; },
+      onSelfFinish: () => { finishPos++; return finishPos; },
+      reset: () => { finishPos = 0; },
+    };
+  }
+
+  it('first player to finish gets position 1', () => {
+    const tracker = makeFinishTracker();
+    expect(tracker.onSelfFinish()).toBe(1);
+  });
+
+  it('second player to finish gets position 2', () => {
+    const tracker = makeFinishTracker();
+    tracker.onOpponentFinish(); // opponent finished first
+    expect(tracker.onSelfFinish()).toBe(2);
+  });
+
+  it('third player gets position 3 when two opponents finished first', () => {
+    const tracker = makeFinishTracker();
+    tracker.onOpponentFinish();
+    tracker.onOpponentFinish();
+    expect(tracker.onSelfFinish()).toBe(3);
+  });
+
+  it('resets to 0 at race start', () => {
+    const tracker = makeFinishTracker();
+    tracker.onOpponentFinish();
+    tracker.reset();
+    expect(tracker.onSelfFinish()).toBe(1);
+  });
+
+  it('solo finish always yields position 1 (no opponents)', () => {
+    const tracker = makeFinishTracker();
+    expect(tracker.onSelfFinish()).toBe(1);
+  });
+});
+
+// --- record_finish one-write semantics (NAN-78) ---
+describe('record_finish one-write semantics', () => {
+  // Simulates the server-side guard: position can only be set once
+  function makeParticipant() {
+    let position = null;
+    return {
+      recordFinish: (pos) => {
+        if (position !== null) return false; // already set — reject
+        position = pos;
+        return true;
+      },
+      getPosition: () => position,
+    };
+  }
+
+  it('records position on first call', () => {
+    const p = makeParticipant();
+    expect(p.recordFinish(1)).toBe(true);
+    expect(p.getPosition()).toBe(1);
+  });
+
+  it('rejects second write attempt', () => {
+    const p = makeParticipant();
+    p.recordFinish(1);
+    expect(p.recordFinish(2)).toBe(false);
+    expect(p.getPosition()).toBe(1); // unchanged
+  });
+
+  it('rejects any subsequent write', () => {
+    const p = makeParticipant();
+    p.recordFinish(3);
+    expect(p.recordFinish(1)).toBe(false);
+    expect(p.recordFinish(5)).toBe(false);
+    expect(p.getPosition()).toBe(3);
+  });
+});

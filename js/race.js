@@ -91,6 +91,8 @@ async function _startRace() {
   _channel.on('broadcast', { event: 'progress' }, ({ payload }) => {
     if (!_others[payload.userId]) _others[payload.userId] = { cat: new CatSprite(payload.variant||'grey'), pct: 0, username: payload.username||'opponent' };
     _others[payload.userId].pct = payload.pct;
+  }).on('broadcast', { event: 'finish' }, () => {
+    _finishPos++;
   }).subscribe();
 
   const input = document.getElementById('race-typing-input');
