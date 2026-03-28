@@ -81,6 +81,12 @@ create policy "participants_update_ready" on public.race_participants for update
 create policy "ghosts_select"       on public.challenge_ghosts  for select using (true);
 create policy "ghosts_insert"       on public.challenge_ghosts  for insert with check (auth.uid() = user_id);
 
+-- Return a single random prompt without fetching the full table client-side
+create or replace function public.get_random_prompt()
+returns setof public.prompts language sql security definer as $$
+  select * from public.prompts order by random() limit 1;
+$$;
+
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
