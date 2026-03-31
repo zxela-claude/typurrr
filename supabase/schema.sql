@@ -76,16 +76,27 @@ create policy "races_insert"        on public.races             for insert  with
 create policy "races_update"        on public.races             for update  using (auth.uid() = host_id);
 create policy "participants_select" on public.race_participants for select using (true);
 create policy "participants_insert" on public.race_participants for insert with check (auth.uid() = user_id);
--- Only allow participants to update their own ready flag; position/score_id are set server-side via host/recordFinish
+-- Participants may only update their own ready flag; position/score_id are written via record_finish() RPC only
 create policy "participants_update_ready" on public.race_participants for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Revoke direct column-level UPDATE on finish fields so clients must use the RPC function
+revoke update (position, score_id) on public.race_participants from authenticated;
 create policy "ghosts_select"       on public.challenge_ghosts  for select using (true);
 create policy "ghosts_insert"       on public.challenge_ghosts  for insert with check (auth.uid() = user_id);
 
--- Return a single random prompt without fetching the full table client-side
-create or replace function public.get_random_prompt()
-returns setof public.prompts language sql security definer as $$
-  select * from public.prompts order by random() limit 1;
+-- Record finish position via security definer to bypass column-level revoke
+-- Enforces one-write semantics: position can only be set once per participant
+create or replace function public.record_finish(p_race_id uuid, p_user_id uuid, p_position int, p_score_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() <> p_user_id then
+    raise exception 'Unauthorized';
+  end if;
+  update race_participants
+     set position = p_position, score_id = p_score_id
+   where race_id = p_race_id and user_id = p_user_id and position is null;
+end;
 $$;
+grant execute on function public.record_finish(uuid, uuid, int, uuid) to authenticated;
 
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()

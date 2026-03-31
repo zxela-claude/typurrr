@@ -82,7 +82,7 @@ export async function setRaceStatus(raceId, status) {
   if (error) throw error;
 }
 export async function recordFinish(raceId, userId, position, scoreId) {
-  const { error } = await supabase.from('race_participants').update({ position, score_id: scoreId }).eq('race_id', raceId).eq('user_id', userId);
+  const { error } = await supabase.rpc('record_finish', { p_race_id: raceId, p_user_id: userId, p_position: position, p_score_id: scoreId });
   if (error) throw error;
 }
 export async function getRaceResults(raceId) {
