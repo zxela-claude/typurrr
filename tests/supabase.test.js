@@ -3,29 +3,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Pure logic tests for supabase.js functions
 // We test the algorithms inline to avoid CDN import issues in Node.
 
-// --- getRandomPrompt selection logic ---
-describe('getRandomPrompt selection logic', () => {
-  function selectRandom(data) {
-    return data[Math.floor(Math.random() * data.length)];
+// --- getRandomPrompt RPC response handling ---
+describe('getRandomPrompt RPC response handling', () => {
+  // Simulates what supabase.rpc('get_random_prompt') returns: an array with one row
+  async function getRandomPromptLogic(rpcResult) {
+    const { data, error } = rpcResult;
+    if (error) throw error;
+    return data[0];
   }
 
-  it('returns an item from the array', () => {
-    const data = [{ id: 1 }, { id: 2 }, { id: 3 }];
-    const result = selectRandom(data);
-    expect(data).toContainEqual(result);
+  it('returns the single row returned by the RPC', async () => {
+    const prompt = { id: 'abc', text: 'the quick brown cat' };
+    const result = await getRandomPromptLogic({ data: [prompt], error: null });
+    expect(result).toEqual(prompt);
   });
 
-  it('returns the only item when array has one element', () => {
-    const data = [{ id: 42, text: 'only' }];
-    expect(selectRandom(data)).toEqual({ id: 42, text: 'only' });
-  });
-
-  it('always returns one of the provided items across many calls', () => {
-    const data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-    for (let i = 0; i < 50; i++) {
-      const result = selectRandom(data);
-      expect(data).toContainEqual(result);
-    }
+  it('throws when the RPC returns an error', async () => {
+    const rpcError = new Error('function not found');
+    await expect(getRandomPromptLogic({ data: null, error: rpcError })).rejects.toThrow('function not found');
   });
 });
 

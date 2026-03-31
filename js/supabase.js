@@ -23,9 +23,9 @@ export async function updateProfile(userId, updates) {
 }
 
 export async function getRandomPrompt() {
-  const { data, error } = await supabase.from('prompts').select('*');
+  const { data, error } = await supabase.rpc('get_random_prompt');
   if (error) throw error;
-  return data[Math.floor(Math.random() * data.length)];
+  return data[0];
 }
 
 export async function submitPrompt(text) {
